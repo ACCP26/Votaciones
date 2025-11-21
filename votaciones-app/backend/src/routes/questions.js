@@ -18,4 +18,20 @@ router.get("/", async (req, res) => {
     }
 });
 
+router.post("/", async (req, res) => {
+    const { texto } = req.body;
+
+    if (!texto) {
+        return res.status(400).json({ error: "Debe enviar el texto de la pregunta" });
+    }
+
+    // Todas las preguntas pertenecen a votación fija ID 1
+    await db.query(
+        "INSERT INTO preguntas (votacion_id, texto) VALUES (1, ?)",
+        [texto]
+    );
+
+    return res.json({ mensaje: "Pregunta creada correctamente" });
+});
+
 module.exports = router;

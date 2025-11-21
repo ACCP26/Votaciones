@@ -456,6 +456,29 @@
 
                 if (result.token) {
                     setToken(result.token);
+                    
+                    // ✅ REGISTRAR ASISTENCIA AUTOMÁTICAMENTE - AGREGAR ESTO
+                    console.log("📝 Registrando asistencia...");
+                    try {
+                        const asistenciaResponse = await fetch(`${API_URL}/vote/registrar-asistencia`, {
+                            method: "POST",
+                            headers: {
+                                "Authorization": `Bearer ${result.token}`,
+                                "Content-Type": "application/json"
+                            }
+                        });
+
+                        if (asistenciaResponse.ok) {
+                            const asistenciaData = await asistenciaResponse.json();
+                            console.log("✅ Asistencia registrada:", asistenciaData.mensaje);
+                        } else {
+                            console.log("⚠️ Asistencia no registrada, pero login exitoso");
+                        }
+                    } catch (asistenciaError) {
+                        console.log("⚠️ Error al registrar asistencia:", asistenciaError);
+                        // No bloqueamos el login si falla la asistencia
+                    }
+                    
                     msg.innerHTML = "¡Ingreso exitoso! Redirigiendo...";
                     msg.classList.add("success");
                     
@@ -484,44 +507,44 @@
         }
 
         function abrirModalDelegado() {
-        document.getElementById("modalDelegado").style.display = "flex";
-    }
+            document.getElementById("modalDelegado").style.display = "flex";
+        }
 
-    function cerrarModalDelegado() {
-        document.getElementById("modalDelegado").style.display = "none";
-        document.getElementById("delegadoMsg").innerHTML = "";
+        function cerrarModalDelegado() {
+            document.getElementById("modalDelegado").style.display = "none";
+            document.getElementById("delegadoMsg").innerHTML = "";
         }
 
         async function loginDeleg() {
-    const usuario = document.getElementById("delegadoUser").value;
-    const pass = document.getElementById("delegadoPass").value;
-    const msg = document.getElementById("delegadoMsg");
+            const usuario = document.getElementById("delegadoUser").value;
+            const pass = document.getElementById("delegadoPass").value;
+            const msg = document.getElementById("delegadoMsg");
 
-    msg.innerHTML = "";
-    msg.className = "message";
+            msg.innerHTML = "";
+            msg.className = "message";
 
-    if (!usuario || !pass) {
-        msg.innerHTML = "Complete todos los campos";
-        msg.classList.add("error");
-        return;
-    }
+            if (!usuario || !pass) {
+                msg.innerHTML = "Complete todos los campos";
+                msg.classList.add("error");
+                return;
+            }
 
-    const res = await loginDelegado(usuario, pass);
+            const res = await loginDelegado(usuario, pass);
 
-    if (res.token) {
-        setToken(res.token);
-        msg.innerHTML = "Acceso correcto. Redirigiendo...";
-        msg.classList.add("success");
+            if (res.token) {
+                setToken(res.token);
+                msg.innerHTML = "Acceso correcto. Redirigiendo...";
+                msg.classList.add("success");
 
-        setTimeout(() => {
-            window.location.href = "delegate.html";
-        }, 800);
+                setTimeout(() => {
+                    window.location.href = "delegate.html";
+                }, 800);
 
-    } else {
-        msg.innerHTML = res.error || "Credenciales incorrectas";
-        msg.classList.add("error");
-    }
-}
+            } else {
+                msg.innerHTML = res.error || "Credenciales incorrectas";
+                msg.classList.add("error");
+            }
+        }
 
         
         // Mejorar la experiencia de usuario
@@ -548,6 +571,7 @@
                 e.target.value = value;
             });
         });
+
         
     </script>
 

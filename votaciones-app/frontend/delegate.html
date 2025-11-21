@@ -365,6 +365,42 @@
             color: #7f8c8d;
             margin-top: 5px;
         }
+
+        .lista-votantes {
+            background: var(--light);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .votante-item {
+            padding: 8px 10px;
+            margin-bottom: 5px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid var(--secondary);
+            font-size: 14px;
+        }
+
+        .votante-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .votante-nombre {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .votante-cedula {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 2px;
+        }
+
+        .votantes-group h4 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
         
         @media (max-width: 600px) {
             .stats-panel {
@@ -437,6 +473,12 @@
                     Gestión de Preguntas
                 </h3>
                 <div class="form-group">
+                    <label class="form-label">Crear nueva pregunta:</label>
+                    <input id="nuevaPregunta" class="form-input" placeholder="Escriba la pregunta...">
+                    <button class="btn btn-primary" onclick="crearPregunta()">Agregar</button>
+                </div>
+
+                <div class="form-group">
                     <label class="form-label">Seleccione una pregunta:</label>
                     <select id="preguntaSelect" class="form-select">
                         <option value="">Cargando preguntas...</option>
@@ -448,6 +490,27 @@
                     </svg>
                     Activar Pregunta
                 </button>
+            </div>
+        </div>
+
+        <!-- Agrega esto en el control-panel después de la gestión de preguntas -->
+        <div class="panel-card">
+            <h3 class="card-title">
+                <div class="card-icon">👥</div>
+                Control de Asistencia
+            </h3>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="mostrarAsistencia()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Ver Asistencia
+                </button>
+            </div>
+            <div id="panelAsistencia" style="display: none; margin-top: 20px;">
+                <div id="estadisticasAsistencia"></div>
+                <div id="listaAsistencia" style="margin-top: 15px; max-height: 300px; overflow-y: auto;"></div>
             </div>
         </div>
         
@@ -467,6 +530,14 @@
         </div>
         
         <p id="msg" class="message"></p>
+
+        <div class="panel-card">
+            <h3 class="card-title">Estadísticas Detalladas</h3>
+            <!-- Agrega este botón temporal para debugging -->
+            <div id="estadisticasContainer">
+                <p id="estadisticas">Seleccione una pregunta para ver los resultados</p>
+            </div>
+        </div>
         
         <div class="status-indicator">
             <div class="status-text">
@@ -521,12 +592,25 @@
                     option.textContent = p.texto;
                     select.appendChild(option);
                 });
+
+                select.onchange = function() {
+                    console.log("Pregunta seleccionada:", this.value);
+                    mostrarEstadisticas();
+                };
                 
                 // Actualizar estadísticas
                 document.getElementById("totalPreguntas").textContent = res.preguntas.length;
+
+                if (res.preguntas.length > 0) {
+                    // Seleccionar la primera pregunta automáticamente
+                    select.value = res.preguntas[0].id;
+                    // Llamar a mostrarEstadisticas inmediatamente
+                    mostrarEstadisticas();
+                }
                 
             } catch (error) {
                 msg.innerHTML = "Error al cargar las preguntas";
+                msg.classList.add("error");
                 msg.classList.add("error");
             }
         }
@@ -593,6 +677,191 @@
             } catch (error) {
                 msg.innerHTML = "Error al activar la pregunta";
                 msg.classList.add("error");
+            }
+        }
+
+        async function crearPregunta() {
+            const texto = document.getElementById("nuevaPregunta").value;
+            const msg = document.getElementById("msg");
+
+            if (!texto.trim()) {
+                msg.innerHTML = "La pregunta no puede estar vacía";
+                msg.classList.add("error");
+                return;
+            }
+
+            const res = await crearPreguntaBackend(texto);
+
+            msg.innerHTML = res.mensaje;
+            msg.classList.add("success");
+
+            document.getElementById("nuevaPregunta").value = "";
+            cargarPreguntas(); // refrescar lista
+        }
+
+        async function mostrarEstadisticas() {
+            const id = document.getElementById("preguntaSelect").value;
+            console.log("🔍 Mostrar estadísticas para pregunta ID:", id);
+            
+            if (!id) {
+                document.getElementById("estadisticas").innerHTML = 
+                    "❌ Por favor, seleccione una pregunta primero";
+                return;
+            }
+
+            try {
+                // Mostrar loading
+                document.getElementById("estadisticas").innerHTML = "⏳ Cargando estadísticas...";
+
+                console.log("📊 Obteniendo estadísticas generales...");
+                // Obtener estadísticas generales
+                const est = await obtenerEstadisticas(id);
+                console.log("✅ Estadísticas recibidas:", est);
+
+                // Mostrar estadísticas generales
+                document.getElementById("estadisticas").innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <h3 style="color: var(--primary); margin-bottom: 20px;">Resultados de la Votación</h3>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                            <div class="stat-card" style="background: rgba(39, 174, 96, 0.1); border-left: 4px solid var(--success);">
+                                <div class="stat-value" style="color: var(--success);">${est.si}</div>
+                                <div class="stat-label">Votos SÍ</div>
+                                <div style="font-size: 14px; color: var(--success); margin-top: 5px;">
+                                    ${est.porcentaje_si ? est.porcentaje_si.toFixed(1) : 0}%
+                                </div>
+                            </div>
+                            <div class="stat-card" style="background: rgba(231, 76, 60, 0.1); border-left: 4px solid var(--warning);">
+                                <div class="stat-value" style="color: var(--warning);">${est.no}</div>
+                                <div class="stat-label">Votos NO</div>
+                                <div style="font-size: 14px; color: var(--warning); margin-top: 5px;">
+                                    ${est.porcentaje_no ? est.porcentaje_no.toFixed(1) : 0}%
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: var(--light); padding: 15px; border-radius: var(--radius);">
+                            <strong>Total de votos:</strong> ${est.total}
+                        </div>
+                    </div>
+                `;
+
+                console.log("🎉 Estadísticas mostradas correctamente");
+
+            } catch (error) {
+                console.error("❌ Error al cargar detalles:", error);
+                document.getElementById("estadisticas").innerHTML = 
+                    "❌ Error al cargar los detalles: " + (error.message || "Verifica la consola para más detalles");
+                document.getElementById("detallesVotantes").style.display = 'none';
+            }
+        }
+
+        // Función para mostrar estadísticas de asistencia
+        // Función para mostrar estadísticas de asistencia - VERSIÓN CORREGIDA
+        async function mostrarAsistencia() {
+            const panel = document.getElementById("panelAsistencia");
+            const estadisticasDiv = document.getElementById("estadisticasAsistencia");
+            const listaDiv = document.getElementById("listaAsistencia");
+
+            try {
+                estadisticasDiv.innerHTML = "⏳ Cargando estadísticas de asistencia...";
+                listaDiv.innerHTML = "";
+                panel.style.display = 'block';
+
+                const response = await fetch(`${API_URL}/vote/estadisticas-asistencia`, {
+                    headers: {
+                        "Authorization": `Bearer ${getToken()}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log("📊 Datos de asistencia recibidos:", data);
+
+                // Mostrar estadísticas
+                estadisticasDiv.innerHTML = `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div class="stat-card" style="background: rgba(52, 152, 219, 0.1); border-left: 4px solid var(--secondary);">
+                            <div class="stat-value" style="color: var(--secondary);">${data.total_usuarios}</div>
+                            <div class="stat-label">Total Usuarios</div>
+                        </div>
+                        <div class="stat-card" style="background: rgba(39, 174, 96, 0.1); border-left: 4px solid var(--success);">
+                            <div class="stat-value" style="color: var(--success);">${data.asistieron}</div>
+                            <div class="stat-label">Asistieron</div>
+                            <div style="font-size: 14px; color: var(--success); margin-top: 5px;">
+                                ${data.porcentaje_asistencia.toFixed(1)}%
+                            </div>
+                        </div>
+                        <div class="stat-card" style="background: rgba(231, 76, 60, 0.1); border-left: 4px solid var(--warning);">
+                            <div class="stat-value" style="color: var(--warning);">${data.faltaron}</div>
+                            <div class="stat-label">Faltaron</div>
+                            <div style="font-size: 14px; color: var(--warning); margin-top: 5px;">
+                                ${data.porcentaje_faltaron.toFixed(1)}%
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: ${data.quorum_alcanzado ? 'rgba(39, 174, 96, 0.1)' : 'rgba(231, 76, 60, 0.1)'}; 
+                                border-radius: var(--radius); border: 2px solid ${data.quorum_alcanzado ? 'var(--success)' : 'var(--warning)'};">
+                        <h4 style="color: ${data.quorum_alcanzado ? 'var(--success)' : 'var(--warning)'}; margin: 0;">
+                            ${data.quorum_alcanzado ? '✅ QUÓRUM ALCANZADO' : '❌ QUÓRUM NO ALCANZADO'}
+                        </h4>
+                        <p style="margin: 5px 0 0 0; color: var(--dark);">
+                            ${data.quorum_alcanzado ? 
+                            `Se alcanzó el quórum con ${data.porcentaje_asistencia.toFixed(1)}% de asistencia` : 
+                            `Se necesita al menos 50% de asistencia. Actual: ${data.porcentaje_asistencia.toFixed(1)}%`}
+                        </p>
+                    </div>
+                `;
+
+                // Mostrar lista de usuarios - CORREGIDO
+                if (data.lista_usuarios && data.lista_usuarios.length > 0) {
+                    let listaHTML = '<h4 style="margin: 20px 0 10px 0; color: var(--primary);">Lista de Usuarios</h4>';
+                    
+                    data.lista_usuarios.forEach(usuario => {
+                        // Manejar diferentes nombres de columnas para el nombre
+                        const nombre = usuario.nombre || 
+                                    usuario.usuario || 
+                                    usuario.username || 
+                                    usuario.email || 
+                                    usuario.correo || 
+                                    usuario.name || 
+                                    `Usuario ${usuario.id}`;
+                        
+                        // Manejar diferentes nombres de columnas para la cédula
+                        const cedula = usuario.cedula || 
+                                    usuario.documento || 
+                                    usuario.dni || 
+                                    usuario.identificacion || 
+                                    usuario.id_number || 
+                                    'N/A';
+                        
+                        listaHTML += `
+                            <div class="votante-item" style="border-left-color: ${usuario.estado === 'Asistió' ? 'var(--success)' : 'var(--warning)'};">
+                                <div class="votante-nombre">${nombre}</div>
+                                <div class="votante-cedula">Identificación: ${cedula}</div>
+                                <div style="font-size: 12px; color: ${usuario.estado === 'Asistió' ? 'var(--success)' : 'var(--warning)'}; 
+                                        margin-top: 3px; font-weight: 500;">
+                                    ${usuario.estado === 'Asistió' ? '✅ Asistió' : '❌ Faltó'}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    listaDiv.innerHTML = listaHTML;
+                } else {
+                    listaDiv.innerHTML = '<div class="votante-item">No hay usuarios registrados en el sistema</div>';
+                }
+
+            } catch (error) {
+                console.error("Error al cargar asistencia:", error);
+                estadisticasDiv.innerHTML = `
+                    <div style="color: var(--warning); text-align: center; padding: 20px;">
+                        ❌ Error al cargar las estadísticas de asistencia: ${error.message}
+                    </div>
+                `;
             }
         }
         

@@ -50,6 +50,16 @@ async function obtenerPregunta() {
     return await res.json();
 }
 
+async function crearPreguntaBackend(texto) {
+    const res = await fetch(`${API_URL}/questions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texto })
+    });
+
+    return await res.json();
+}
+
 // ------------------------------------------------------------
 // Enviar voto
 // ------------------------------------------------------------
@@ -121,5 +131,34 @@ async function obtenerEstadoSistema() {
     const res = await fetch(`${API_URL}/vote/actual`, {
         headers: { "Authorization": `Bearer ${getToken()}` }
     });
+    return await res.json();
+}
+
+// Obtener estadísticas de una pregunta
+async function obtenerEstadisticas(preguntaId) {
+    const res = await fetch(`${API_URL}/vote/estadisticas/${preguntaId}`, {
+        headers: {
+            "Authorization": `Bearer ${getToken()}`
+        }
+    });
+    
+    if (!res.ok) {
+        throw new Error(`Error ${res.status}: ${res.statusText}`);
+    }
+    
+    return await res.json();
+}
+
+async function obtenerEstadisticasAsistencia() {
+    const res = await fetch(`${API_URL}/vote/estadisticas-asistencia`, {
+        headers: {
+            "Authorization": `Bearer ${getToken()}`
+        }
+    });
+    
+    if (!res.ok) {
+        throw new Error(`Error ${res.status}: ${res.statusText}`);
+    }
+    
     return await res.json();
 }
