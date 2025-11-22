@@ -694,18 +694,26 @@
                 console.log("🔄 Creando pregunta...");
                 const res = await crearPreguntaBackend(texto);
 
+                console.log("📨 Respuesta final:", res);
+
+                // ✅ Verificar que sea el mensaje de confirmación
                 if (res.mensaje) {
                     msg.innerHTML = res.mensaje;
                     msg.classList.add("success");
                     document.getElementById("nuevaPregunta").value = "";
                     
-                    // Recargar preguntas después de crear
+                    // Recargar preguntas después de 1 segundo
                     setTimeout(() => {
                         cargarPreguntas();
                     }, 1000);
                     
+                } else if (res.preguntas) {
+                    // ❌ Esto indica que el POST devolvió la lista (error en backend)
+                    msg.innerHTML = "Error: El servidor no creó la pregunta correctamente";
+                    msg.classList.add("error");
+                    console.error("❌ El POST devolvió lista de preguntas:", res);
                 } else {
-                    msg.innerHTML = res.error || "Error al crear pregunta";
+                    msg.innerHTML = res.error || "Error desconocido al crear pregunta";
                     msg.classList.add("error");
                 }
                 

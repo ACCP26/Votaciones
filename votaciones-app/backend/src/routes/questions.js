@@ -18,32 +18,39 @@ router.get("/", async (req, res) => {
     }
 });
 
-router.post("/", auth, async (req, res) => {
+router.post("/", async (req, res) => {
+    console.log("🔍 POST /questions recibido");
+    console.log("📝 Body:", req.body);
+    
+    const { texto } = req.body;
+
+    if (!texto) {
+        console.log("❌ Texto vacío");
+        return res.status(400).json({ error: "Debe enviar el texto de la pregunta" });
+    }
+
     try {
-        console.log("🔍 POST /questions recibido");
-        console.log("👤 Usuario:", req.user);  // Verificar autenticación
-        console.log("📝 Body:", req.body);
+        console.log("💾 Ejecutando INSERT...");
         
-        const { texto } = req.body;
-
-        if (!texto) {
-            console.log("❌ Texto vacío");
-            return res.status(400).json({ error: "Debe enviar el texto de la pregunta" });
-        }
-
-        console.log("💾 Insertando en BD...");
+        // SOLO INSERT - sin SELECT después
         const [result] = await db.query(
             "INSERT INTO preguntas (votacion_id, texto) VALUES (1, ?)",
             [texto]
         );
 
-        console.log("✅ Pregunta creada, ID:", result.insertId);
-        return res.json({ mensaje: "Pregunta creada correctamente" });
-        
+        console.log("✅ INSERT exitoso, ID:", result.insertId);
+
+        // ✅ Respuesta correcta
+        return res.json({ 
+            mensaje: "Pregunta creada correctamente",
+            id: result.insertId 
+        });
+
     } catch (error) {
-        console.error("❌ Error en POST /questions:", error);
-        return res.status(500).json({ error: "Error al crear pregunta" });
+        console.error("❌ Error en INSERT:", error);
+        return res.status(500).json({ error: "Error al crear pregunta: " + error.message });
     }
 });
+
 
 module.exports = router;

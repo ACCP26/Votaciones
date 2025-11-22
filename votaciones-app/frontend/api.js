@@ -55,27 +55,22 @@ async function crearPreguntaBackend(texto) {
         console.log("🔍 DEBUG crearPreguntaBackend:");
         console.log("📝 Texto a enviar:", texto);
         console.log("🌐 URL:", `${API_URL}/questions`);
+        console.log("🔑 Token:", getToken() ? "Presente" : "Ausente");
         
         const res = await fetch(`${API_URL}/questions`, {
             method: "POST",
             headers: { 
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${getToken()}`  // 👈 ¿Necesita auth?
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({ texto })
         });
 
         console.log("📊 Status:", res.status);
         console.log("📊 OK:", res.ok);
-        
-        if (!res.ok) {
-            const errorText = await res.text();
-            console.error("❌ Error response:", errorText);
-            throw new Error(`Error ${res.status}: ${res.statusText}`);
-        }
+        console.log("📊 Headers:", Object.fromEntries(res.headers.entries()));
         
         const data = await res.json();
-        console.log("✅ Respuesta creación:", data);
+        console.log("📋 Respuesta completa:", data);
         
         return data;
         
