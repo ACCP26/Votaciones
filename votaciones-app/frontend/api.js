@@ -53,25 +53,17 @@ async function obtenerPregunta() {
 async function crearPreguntaBackend(texto) {
     try {
         console.log("🔍 DEBUG crearPreguntaBackend:");
-        console.log("📝 Texto a enviar:", texto);
-        console.log("🌐 URL:", `${API_URL}/questions`);
-        console.log("🔑 Token:", getToken() ? "Presente" : "Ausente");
-        
+
         const res = await fetch(`${API_URL}/questions`, {
             method: "POST",
             headers: { 
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`  // ⬅️ FALTABA ESTO
             },
             body: JSON.stringify({ texto })
         });
 
-        console.log("📊 Status:", res.status);
-        console.log("📊 OK:", res.ok);
-        console.log("📊 Headers:", Object.fromEntries(res.headers.entries()));
-        
         const data = await res.json();
-        console.log("📋 Respuesta completa:", data);
-        
         return data;
         
     } catch (error) {

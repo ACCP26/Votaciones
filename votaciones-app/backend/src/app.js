@@ -15,13 +15,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use(express.static(path.join(__dirname, "../../frontend")));
 
 // Rutas
 app.use("/auth", authRoutes);
 app.use("/vote", voteRoutes);
 app.use("/delegate", delegateRoutes);
 app.use("/questions", questionsRoutes);
+
+app.use(express.static(path.join(__dirname, "../../frontend")));
 
 // Puerto
 const PORT = process.env.PORT || 3000;
