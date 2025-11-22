@@ -18,20 +18,25 @@ router.get("/", async (req, res) => {
     }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", auth, async (req, res) => {  // 👈 Agregar auth aquí
     const { texto } = req.body;
 
     if (!texto) {
         return res.status(400).json({ error: "Debe enviar el texto de la pregunta" });
     }
 
-    // Todas las preguntas pertenecen a votación fija ID 1
-    await db.query(
-        "INSERT INTO preguntas (votacion_id, texto) VALUES (1, ?)",
-        [texto]
-    );
+    try {
+        await db.query(
+            "INSERT INTO preguntas (votacion_id, texto) VALUES (1, ?)",
+            [texto]
+        );
 
-    return res.json({ mensaje: "Pregunta creada correctamente" });
+        return res.json({ mensaje: "Pregunta creada correctamente" });
+        
+    } catch (error) {
+        console.error("Error al crear pregunta:", error);
+        return res.status(500).json({ error: "Error al crear pregunta" });
+    }
 });
 
 module.exports = router;
