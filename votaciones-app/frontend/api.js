@@ -51,13 +51,38 @@ async function obtenerPregunta() {
 }
 
 async function crearPreguntaBackend(texto) {
-    const res = await fetch(`${API_URL}/questions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ texto })
-    });
+    try {
+        console.log("🔍 DEBUG crearPreguntaBackend:");
+        console.log("📝 Texto a enviar:", texto);
+        console.log("🌐 URL:", `${API_URL}/questions`);
+        
+        const res = await fetch(`${API_URL}/questions`, {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`  // 👈 ¿Necesita auth?
+            },
+            body: JSON.stringify({ texto })
+        });
 
-    return await res.json();
+        console.log("📊 Status:", res.status);
+        console.log("📊 OK:", res.ok);
+        
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error("❌ Error response:", errorText);
+            throw new Error(`Error ${res.status}: ${res.statusText}`);
+        }
+        
+        const data = await res.json();
+        console.log("✅ Respuesta creación:", data);
+        
+        return data;
+        
+    } catch (error) {
+        console.error("💥 Error en crearPreguntaBackend:", error);
+        throw error;
+    }
 }
 
 // ------------------------------------------------------------

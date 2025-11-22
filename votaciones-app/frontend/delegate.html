@@ -690,13 +690,30 @@
                 return;
             }
 
-            const res = await crearPreguntaBackend(texto);
+            try {
+                console.log("🔄 Creando pregunta...");
+                const res = await crearPreguntaBackend(texto);
 
-            msg.innerHTML = res.mensaje;
-            msg.classList.add("success");
-
-            document.getElementById("nuevaPregunta").value = "";
-            cargarPreguntas(); // refrescar lista
+                if (res.mensaje) {
+                    msg.innerHTML = res.mensaje;
+                    msg.classList.add("success");
+                    document.getElementById("nuevaPregunta").value = "";
+                    
+                    // Recargar preguntas después de crear
+                    setTimeout(() => {
+                        cargarPreguntas();
+                    }, 1000);
+                    
+                } else {
+                    msg.innerHTML = res.error || "Error al crear pregunta";
+                    msg.classList.add("error");
+                }
+                
+            } catch (error) {
+                console.error("Error al crear pregunta:", error);
+                msg.innerHTML = "Error al crear pregunta: " + error.message;
+                msg.classList.add("error");
+            }
         }
 
         async function mostrarEstadisticas() {
